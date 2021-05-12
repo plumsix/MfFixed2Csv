@@ -1,8 +1,8 @@
 .vs/
 *.log
-*.dat
 *.bad
 *.user
+t *.drawio
 Debug/
 Release/
 MfFixed2Csv.exe
