@@ -1,0 +1,9 @@
+# nmake /f Makefile.vc  EXE="MfFixed2Csv.exe" OBJS="MfFixed2Csv.obj MfFixed2Csv_Impl.obj" CPPFLAGS="/nologo /EHsc /Zi /O2 /std:c++17" 
+
+$(EXE): $(OBJS)
+	$(CC) $(CPPFLAGS) /Fe$*.exe $**
+
+clean:
+	del $(EXE) $(OBJS) $(EXE:exe=pdb)
+
+

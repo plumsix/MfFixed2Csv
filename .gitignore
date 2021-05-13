@@ -2,11 +2,10 @@
 *.log
 *.bad
 *.user
-t *.drawio
+*.ilk
+*.exe
+*.obj
+*.pdb
+*.png
 Debug/
 Release/
-MfFixed2Csv.exe
-MfFixed2Csv.ilk
-MfFixed2Csv.obj
-MfFixed2Csv.pdb
-vc140.pdb

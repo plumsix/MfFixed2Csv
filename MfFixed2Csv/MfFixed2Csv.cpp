@@ -40,6 +40,7 @@ int main(int argc, char** argv)
         std::cerr << basename.stem() << " <IN_FILE> <OUT_DIRECTORY>" << std::endl;
         return -1;
     }
+
     std::ifstream ifs(argv[1]);
     if (!ifs)
     {
@@ -56,7 +57,8 @@ int main(int argc, char** argv)
 
     std::string o_dir(argv[2]);
 
-    // 入力元ファイルのベース名
+    // 入力元ファイルのベース名（出力ファイルの接頭辞として利用される）
+    // Base name of input source file (used as prefix of output files)
     auto in_stem = std::filesystem::path(argv[1]).stem();
 
     // CSV column names.
@@ -78,6 +80,8 @@ int main(int argc, char** argv)
     ) << std::endl;
 
     std::string line;
+    PK_REC3 pk; // stores a slip number read recently from variable "line". 
+    LAYOUT layout;
     int total_lines = 0;
     int num_lines_3 = 0;
     int num_lines_4 = 0;
@@ -91,19 +95,13 @@ int main(int argc, char** argv)
         switch (line[0])
         {
         case '3':
-            {
-                LAYOUT layout;
-                ::memcpy(&layout, line.c_str(), length);
-                ofs_h << output_body_3(buff_3, BUFFER_SIZE, layout.r3);
-            }
+            ::memcpy(&layout, line.c_str(), length);
+            ofs_h << output_body_3(buff_3, BUFFER_SIZE, layout.r3, pk);
             num_lines_3++;
             break;
         case '4':
-            {
-                LAYOUT layout;
-                ::memcpy(&layout, line.c_str(), length);
-                ofs_b << output_body_4(buff_4, BUFFER_SIZE, layout.r4);
-            }
+            ::memcpy(&layout, line.c_str(), length);
+            ofs_b << output_body_4(buff_4, BUFFER_SIZE, layout.r4, pk);
             num_lines_4++;
             break;
         case '1':
@@ -116,7 +114,7 @@ int main(int argc, char** argv)
                     std::cerr << "Error - Failed to open file." << std::endl;
                     return -3;
                 }
-                LAYOUT layout;
+                output_header_1(ofs);
                 ::memcpy(&layout, line.c_str(), length);
                 ofs << output_body_1(buff_1, BUFFER_SIZE, layout.r1);
             }
@@ -131,7 +129,7 @@ int main(int argc, char** argv)
                     std::cerr << "Error - Failed to open file." << std::endl;
                     return -3;
                 }
-                LAYOUT layout;
+                output_header_9(ofs);
                 ::memcpy(&layout, line.c_str(), length);
                 ofs << output_body_9(buff_1, BUFFER_SIZE, layout.r9);
             }
@@ -142,10 +140,12 @@ int main(int argc, char** argv)
         }
         total_lines++;
     }
+
     delete[] buff_1;
     delete[] buff_9;
     delete[] buff_3;
     delete[] buff_4;
+
     std::cout
         << format("Selected records (3)=%d, rec size=%d", num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
         << format("Selected records (4)=%d, rec size=%d", num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
@@ -153,4 +153,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-    

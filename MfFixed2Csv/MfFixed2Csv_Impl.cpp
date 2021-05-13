@@ -58,6 +58,7 @@ void output_header_4(std::ofstream& ofs)
 {
     ofs
         << "\"区分\","
+        << "\"伝票番号\","
         << "\"明細番号\","
         << "\"商品コード\","
         << "\"商品名\","
@@ -74,44 +75,59 @@ void output_header_9(std::ofstream& ofs)
 
 char* output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row)
 {
+    ADAPT_DATE(D02, C02);
+
     char* ptr = buff;
-    ptr += snprintf(ptr, bufl
-        , "%.*s,%.*s\n"
-        , SIZEOF32(row.K_1), row.K_1
-        , SIZEOF32(row.K_2), row.K_2
+    ptr += ::snprintf(ptr, bufl
+        , "\"%.*s\",\"%.*s\"\n"
+        , SIZEOF32(row.C01), row.C01
+        , SIZEOF32(row.D02), row.D02
     );
     buff[ptr - buff] = '\0';
     return buff;
 }
 
-char* output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row)
+char* output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk)
 {
+    // 伝票明細へ移行する項目を保存
+    ::memcpy(pk.C02, row.C02, sizeof(pk.C02));
+
+    ADAPT_NUMERIC(N06, C06);
+    ADAPT_TIME(T07, C07);
+
     char* ptr = buff;
-    ptr += snprintf(ptr, bufl
-        , "%.*s,%.*s,%.*s,%.*s,%.*s,%.*s,%.*s\n"
-        , SIZEOF32(row.K_1), row.K_1
-        , SIZEOF32(row.K_2), row.K_2
-        , SIZEOF32(row.K_3), row.K_3
-        , SIZEOF32(row.K_4), row.K_4
-        , SIZEOF32(row.K_5), row.K_5
-        , SIZEOF32(row.K_6), row.K_6
-        , SIZEOF32(row.K_7), row.K_7
+    ptr += ::snprintf(ptr, bufl
+        , "\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",%d,\"%.*s\"\n"
+        , SIZEOF32(row.C01), row.C01
+        , SIZEOF32(row.C02), row.C02
+        , SIZEOF32(row.C03), row.C03
+        , SIZEOF32(row.C04), row.C04
+        , SIZEOF32(row.C05), row.C05
+        , row.N06
+        , SIZEOF32(row.T07), row.T07
     );
     buff[ptr - buff] = '\0';
     return buff;
 }
 
-char* output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row)
+char* output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk)
 {
+    ADAPT_NUMERIC(N02, C02);
+    ADAPT_VARCHAR(V03, C03, L03);
+    ADAPT_VARCHAR(V04, C04, L04);
+    ADAPT_NUMERIC(N05, C05);
+    ADAPT_NUMERIC(N06, C06);
+
     char* ptr = buff;
-    ptr += snprintf(ptr, bufl
-        , "%.*s,%.*s,%.*s,%.*s,%.*s,%.*s\n"
-        , SIZEOF32(row.K_1), row.K_1
-        , SIZEOF32(row.K_2), row.K_2
-        , SIZEOF32(row.K_3), row.K_3
-        , SIZEOF32(row.K_4), row.K_4
-        , SIZEOF32(row.K_5), row.K_5
-        , SIZEOF32(row.K_6), row.K_6
+    ptr += ::snprintf(ptr, bufl
+        , "\"%.*s\",\"%.*s\",%d,\"%.*s\",\"%.*s\",%d,%d\n"
+        , SIZEOF32(row.C01), row.C01
+        , SIZEOF32(pk.C02), pk.C02
+        , row.N02
+        , row.L03, row.V03
+        , row.L04, row.V04
+        , row.N05
+        , row.N06
     );
     buff[ptr - buff] = '\0';
     return buff;
@@ -119,11 +135,13 @@ char* output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row)
 
 char* output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row)
 {
+    ADAPT_NUMERIC(N02, C02);
+
     char* ptr = buff;
-    ptr += snprintf(ptr, bufl
-        , "%.*s,%.*s\n"
-        , SIZEOF32(row.K_1), row.K_1
-        , SIZEOF32(row.K_2), row.K_2
+    ptr += ::snprintf(ptr, bufl
+        , "\"%.*s\",%d\n"
+        , SIZEOF32(row.C01), row.C01
+        , row.N02
     );
     buff[ptr - buff] = '\0';
     return buff;
