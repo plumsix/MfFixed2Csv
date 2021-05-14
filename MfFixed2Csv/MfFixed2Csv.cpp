@@ -1,8 +1,10 @@
 ﻿/*
 ==========================================================================
 MfFixed2Csv.cpp : CSV format converter
-Used to convert and distribute  fixed-length files organized
-in a multi-format (multi-layout) style to CSV files.
+A fixed-length file corded in Shift-JIS organized in multi format
+(saied also multi layout) get divided into several files
+according to a label consists of one or more characters that placed on a row.
+Simulterneously, each lines are transformed into CSV corded in UTF-8.
 Usage:
 MfFixed2Csv <IN_FILE> <OUT_DIRECTORY>
 How to build:
@@ -29,29 +31,32 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "MfFixed2Csv.h"
 
-const static size_t BUFFER_SIZE = 1000;
-
 int main(int argc, char** argv)
 {
     if (argc < 3)
     {
         std::cerr << "Error - Too few parameters." << std::endl;
         auto basename = std::filesystem::path(argv[0]);
-        std::cerr << basename.stem() << " <IN_FILE> <OUT_DIRECTORY>" << std::endl;
+        std::cerr << basename.stem()
+            << " <IN_FILE> <OUT_DIRECTORY>" << std::endl;
         return -1;
     }
 
     std::ifstream ifs(argv[1]);
     if (!ifs)
     {
-        std::cerr << "Error - No input file. Specified " << argv[1] << std::endl;
+        std::cerr
+            << "Error - No input file. Specified "
+            << argv[1] << std::endl;
         return -2;
     }
 
     struct stat statDirectory;
     if (stat(argv[2], &statDirectory) != 0)
     {
-        std::cerr << "Error - Output folder not found. Specified " << argv[2] << std::endl;
+        std::cerr
+            << "Error - Output folder not found. Specified "
+            << argv[2] << std::endl;
         return -3;
     }
 
@@ -79,29 +84,31 @@ int main(int argc, char** argv)
         , argv[1], argv[2]
     ) << std::endl;
 
-    std::string line;
-    PK_REC3 pk; // stores a slip number read recently from variable "line". 
-    LAYOUT layout;
     int total_lines = 0;
     int num_lines_3 = 0;
     int num_lines_4 = 0;
-    char* buff_1 = new char[BUFFER_SIZE + 1];
-    char* buff_9 = new char[BUFFER_SIZE + 1];
-    char* buff_3 = new char[BUFFER_SIZE + 1];
-    char* buff_4 = new char[BUFFER_SIZE + 1];
-    while (getline(ifs, line))
+
+    PK_REC3 pk;                  // stores a slip number recently getline() call.
+    LAYOUT unified;                       // For acceptance of fixed length data.
+    ::memset(&unified, 0, sizeof(LAYOUT));
+    char org_csv_1[sizeof(LAYOUT) * 2]; // A working area to organize CSV format.
+    char org_csv_9[sizeof(LAYOUT) * 2];
+    char org_csv_3[sizeof(LAYOUT) * 2];
+    char org_csv_4[sizeof(LAYOUT) * 2];
+    for (;;)
     {
-        size_t length = line.length();
-        switch (line[0])
+        ifs.getline(unified.line_buff, BUFFER_SIZE);
+        if (ifs.bad() || ifs.eof()) {
+            break;
+        }
+        switch (unified.line_buff[0])
         {
         case '3':
-            ::memcpy(&layout, line.c_str(), length);
-            ofs_h << output_body_3(buff_3, BUFFER_SIZE, layout.r3, pk);
+            ofs_h << output_body_3(org_csv_3, sizeof(org_csv_3), unified.r3, pk);
             num_lines_3++;
             break;
         case '4':
-            ::memcpy(&layout, line.c_str(), length);
-            ofs_b << output_body_4(buff_4, BUFFER_SIZE, layout.r4, pk);
+            ofs_b << output_body_4(org_csv_4, sizeof(org_csv_4), unified.r4, pk);
             num_lines_4++;
             break;
         case '1':
@@ -111,12 +118,13 @@ int main(int argc, char** argv)
                 std::ofstream ofs(p1);
                 if (ofs.fail())
                 {
-                    std::cerr << "Error - Failed to open file." << std::endl;
+                    std::cerr
+                        << "Error - Failed to open file."
+                        << std::endl;
                     return -3;
                 }
                 output_header_1(ofs);
-                ::memcpy(&layout, line.c_str(), length);
-                ofs << output_body_1(buff_1, BUFFER_SIZE, layout.r1);
+                ofs << output_body_1(org_csv_1, sizeof(org_csv_1), unified.r1);
             }
             break;
         case '9':
@@ -126,29 +134,27 @@ int main(int argc, char** argv)
                 std::ofstream ofs(p9);
                 if (ofs.fail())
                 {
-                    std::cerr << "Error - Failed to open file." << std::endl;
+                    std::cerr
+                        << "Error - Failed to open file."
+                        << std::endl;
                     return -3;
                 }
                 output_header_9(ofs);
-                ::memcpy(&layout, line.c_str(), length);
-                ofs << output_body_9(buff_1, BUFFER_SIZE, layout.r9);
+                ofs << output_body_9(org_csv_9, sizeof(org_csv_9), unified.r9);
             }
             break;
         default:
-            assert(false);   // Never reach here.
-            break;
+            assert(false);  //The process never reaches here. 
+            return -1;
         }
         total_lines++;
     }
 
-    delete[] buff_1;
-    delete[] buff_9;
-    delete[] buff_3;
-    delete[] buff_4;
-
     std::cout
-        << format("Selected records (3)=%d, rec size=%d", num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
-        << format("Selected records (4)=%d, rec size=%d", num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
+        << format("Selected records (3)=%d, rec size=%d"
+            , num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
+        << format("Selected records (4)=%d, rec size=%d"
+            , num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
         << format("Total records=%d", total_lines) << std::endl;
 
     return 0;

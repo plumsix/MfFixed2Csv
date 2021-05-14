@@ -1,8 +1,10 @@
 ﻿/*
 ==========================================================================
 MfFixed2Csv.cpp : CSV format converter
-Used to convert and distribute  fixed-length files organized
-in a multi-format (multi-layout) style to CSV files.
+A fixed-length file corded in Shift-JIS organized in multi format
+(saied also multi layout) get divided into several files
+according to a label consists of one or more characters that placed on a row.
+Simulterneously, each lines are transformed into CSV corded in UTF-8.
 Usage:
 MfFixed2Csv <IN_FILE> <OUT_DIRECTORY>
 How to build:
@@ -52,6 +54,8 @@ std::string format(const std::string& fmt, Args ... args)
 #define DATE_LENGTH 10  // Length when the date is expressed as "yyyy-mm-dd" 
 #define TIME_LENGTH  8  // Length when the date is expressed as "hh:MM:dd" 
 #define ZEN_KAKU_SPACE   0x4081  // 全角空白 (Shift-JIS)
+#define BUFFER_SIZE       1000
+
 
 // Convert the read date to a representation (yyyy-mm-dd) 
 // that can be used as a CSV element
@@ -134,6 +138,8 @@ struct PK_REC3 {
 
 union LAYOUT
 {
+    char line_buff[BUFFER_SIZE]; // For acceptance of fixed length data.
+
     // ファイル・ヘッダ (File header)
     struct REC1
     {
@@ -204,11 +210,11 @@ extern void output_header_4(std::ofstream& ofs);
 
 extern void output_header_9(std::ofstream& ofs);
 
-extern char* output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row);
+extern std::string output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row);
 
-extern char* output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk);
+extern std::string output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk);
 
-extern char* output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk);
+extern std::string output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk);
 
-extern char* output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row);
+extern std::string output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row);
 
