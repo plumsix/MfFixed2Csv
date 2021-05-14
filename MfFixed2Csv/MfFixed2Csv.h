@@ -204,11 +204,11 @@ extern void output_header_4(std::ofstream& ofs);
 
 extern void output_header_9(std::ofstream& ofs);
 
-extern char* output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row);
+extern std::string output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row);
 
-extern char* output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk);
+extern std::string output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk);
 
-extern char* output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk);
+extern std::string output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk);
 
-extern char* output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row);
+extern std::string output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row);
 

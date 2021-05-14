@@ -37,21 +37,26 @@ int main(int argc, char** argv)
     {
         std::cerr << "Error - Too few parameters." << std::endl;
         auto basename = std::filesystem::path(argv[0]);
-        std::cerr << basename.stem() << " <IN_FILE> <OUT_DIRECTORY>" << std::endl;
+        std::cerr << basename.stem()
+            << " <IN_FILE> <OUT_DIRECTORY>" << std::endl;
         return -1;
     }
 
     std::ifstream ifs(argv[1]);
     if (!ifs)
     {
-        std::cerr << "Error - No input file. Specified " << argv[1] << std::endl;
+        std::cerr
+            << "Error - No input file. Specified "
+            << argv[1] << std::endl;
         return -2;
     }
 
     struct stat statDirectory;
     if (stat(argv[2], &statDirectory) != 0)
     {
-        std::cerr << "Error - Output folder not found. Specified " << argv[2] << std::endl;
+        std::cerr
+            << "Error - Output folder not found. Specified "
+            << argv[2] << std::endl;
         return -3;
     }
 
@@ -111,7 +116,9 @@ int main(int argc, char** argv)
                 std::ofstream ofs(p1);
                 if (ofs.fail())
                 {
-                    std::cerr << "Error - Failed to open file." << std::endl;
+                    std::cerr
+                        << "Error - Failed to open file."
+                        << std::endl;
                     return -3;
                 }
                 output_header_1(ofs);
@@ -126,7 +133,9 @@ int main(int argc, char** argv)
                 std::ofstream ofs(p9);
                 if (ofs.fail())
                 {
-                    std::cerr << "Error - Failed to open file." << std::endl;
+                    std::cerr
+                        << "Error - Failed to open file."
+                        << std::endl;
                     return -3;
                 }
                 output_header_9(ofs);
@@ -135,7 +144,7 @@ int main(int argc, char** argv)
             }
             break;
         default:
-            assert(false);   // Never reach here.
+            assert(false);  //The process never reaches here. 
             break;
         }
         total_lines++;
@@ -147,8 +156,10 @@ int main(int argc, char** argv)
     delete[] buff_4;
 
     std::cout
-        << format("Selected records (3)=%d, rec size=%d", num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
-        << format("Selected records (4)=%d, rec size=%d", num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
+        << format("Selected records (3)=%d, rec size=%d"
+            , num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
+        << format("Selected records (4)=%d, rec size=%d"
+            , num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
         << format("Total records=%d", total_lines) << std::endl;
 
     return 0;
