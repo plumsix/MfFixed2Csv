@@ -31,6 +31,26 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "MfFixed2Csv.h"
 
+template<class F_HDR, class F_BDY, class RECTYPE>
+bool write_head_or_trailer(
+    std::filesystem::path& path_to_csv, 
+    F_HDR write_header, 
+    F_BDY write_body, 
+    RECTYPE& rec
+)
+{
+    std::ofstream ofs(path_to_csv);
+    if (ofs.fail())
+    {
+        std::cerr << "Error - Failed to open file." << std::endl;
+        return true;
+    }
+    write_header(ofs);
+    char org_csv[sizeof(LAYOUT) * 2];
+    ofs << write_body(org_csv, sizeof(org_csv), rec);
+    return false;
+}
+
 int main(int argc, char** argv)
 {
     if (argc < 3)
@@ -91,9 +111,7 @@ int main(int argc, char** argv)
     PK_REC3 pk;                  // stores a slip number recently getline() call.
     LAYOUT unified;                       // For acceptance of fixed length data.
     ::memset(&unified, 0, sizeof(LAYOUT));
-    char org_csv_1[sizeof(LAYOUT) * 2]; // A working area to organize CSV format.
-    char org_csv_9[sizeof(LAYOUT) * 2];
-    char org_csv_3[sizeof(LAYOUT) * 2];
+    char org_csv_3[sizeof(LAYOUT) * 2]; // A working area to organize CSV format.
     char org_csv_4[sizeof(LAYOUT) * 2];
     for (;;)
     {
@@ -115,32 +133,18 @@ int main(int argc, char** argv)
             {
                 std::filesystem::path p1(o_dir);
                 p1 /= in_stem.string() + "_1.csv";
-                std::ofstream ofs(p1);
-                if (ofs.fail())
-                {
-                    std::cerr
-                        << "Error - Failed to open file."
-                        << std::endl;
-                    return -3;
-                }
-                output_header_1(ofs);
-                ofs << output_body_1(org_csv_1, sizeof(org_csv_1), unified.r1);
+                if (write_head_or_trailer(
+                    p1, output_header_1, output_body_1, unified.r1
+                )) return -3;
             }
             break;
         case '9':
             {
                 std::filesystem::path p9(o_dir);
                 p9 /= in_stem.string() + "_9.csv";
-                std::ofstream ofs(p9);
-                if (ofs.fail())
-                {
-                    std::cerr
-                        << "Error - Failed to open file."
-                        << std::endl;
-                    return -3;
-                }
-                output_header_9(ofs);
-                ofs << output_body_9(org_csv_9, sizeof(org_csv_9), unified.r9);
+                if (write_head_or_trailer(
+                    p9, output_header_9, output_body_9, unified.r9
+                )) return -3;
             }
             break;
         default:
