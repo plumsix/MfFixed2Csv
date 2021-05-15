@@ -144,7 +144,7 @@ int main(int argc, char** argv)
             }
             break;
         default:
-            assert(false);  //The process never reaches here. 
+            assert(false);  //The process never reaches here.
             return -1;
         }
         total_lines++;
