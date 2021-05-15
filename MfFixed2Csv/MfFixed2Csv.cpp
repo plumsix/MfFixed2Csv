@@ -122,11 +122,15 @@ int main(int argc, char** argv)
         switch (unified.line_buff[0])
         {
         case '3':
-            ofs_h << output_body_3(org_csv_3, sizeof(org_csv_3), unified.r3, pk);
+            ofs_h << output_body_3(
+                org_csv_3, sizeof(org_csv_3), unified.r3, pk
+            );
             num_lines_3++;
             break;
         case '4':
-            ofs_b << output_body_4(org_csv_4, sizeof(org_csv_4), unified.r4, pk);
+            ofs_b << output_body_4(
+                org_csv_4, sizeof(org_csv_4), unified.r4, pk
+            );
             num_lines_4++;
             break;
         case '1':
@@ -134,7 +138,8 @@ int main(int argc, char** argv)
                 std::filesystem::path p1(o_dir);
                 p1 /= in_stem.string() + "_1.csv";
                 if (write_head_or_trailer(
-                    p1, output_header_1, output_body_1, unified.r1
+                    p1, output_header_1, output_body_1
+                    , unified.r1
                 )) return -3;
             }
             break;
@@ -143,7 +148,8 @@ int main(int argc, char** argv)
                 std::filesystem::path p9(o_dir);
                 p9 /= in_stem.string() + "_9.csv";
                 if (write_head_or_trailer(
-                    p9, output_header_9, output_body_9, unified.r9
+                    p9, output_header_9, output_body_9
+                    , unified.r9
                 )) return -3;
             }
             break;
