@@ -138,7 +138,8 @@ struct PK_REC3 {
 
 union LAYOUT
 {
-    char line_buff[BUFFER_SIZE]; // For acceptance of fixed length data.
+    // For acceptance of fixed length data.
+    char line_buff[BUFFER_SIZE];
 
     // ファイル・ヘッダ (File header)
     struct REC1
@@ -147,7 +148,8 @@ union LAYOUT
         char C02[ 8];          // 作成日付 (Date of creation )
         char C03[55];          // FILLER
         // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that it can be used as an element of CSV 
+        // Attribute converted so that
+        // it can be used as an element of CSV 
         char D02[DATE_LENGTH]; // 作成日付
 
     } r1
@@ -164,7 +166,8 @@ union LAYOUT
         char C07[ 6];          // 時刻 (Times of Day)
         char C08[16];          // FILLER
         // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that it can be used as an element of CSV 
+        // Attribute converted so that 
+        // it can be used as an element of CSV 
         int N06;               // 明細数
         char T07[TIME_LENGTH]; // 時刻
     } r3
@@ -179,7 +182,8 @@ union LAYOUT
         char C05[ 9];          // 単価 (Unit price)
         char C06[ 6];          // 数量 (Quantity)
         // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that it can be used as an element of CSV 
+        // Attribute converted so that 
+        // it can be used as an element of CSV 
         int N02;               // 明細番号
         int N05;               // 単価
         int N06;               // 数量
@@ -196,7 +200,8 @@ union LAYOUT
         char C02[ 5];          // 件数 (Number of lines)
         char C03[56];          // FILLER
         // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that it can be used as an element of CSV 
+        // Attribute converted so that 
+        // it can be used as an element of CSV 
         int N02;               // 件数
     } r9
     ;
