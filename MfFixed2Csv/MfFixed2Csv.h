@@ -136,75 +136,77 @@ struct PK_REC3 {
     char C02[10];          // 伝票番号 (Slip number)
 };
 
+struct REC1
+{
+    char C01[1];          // 区分 (Classification)
+    char C02[8];          // 作成日付 (Date of creation )
+    char C03[55];          // FILLER
+    // CSVの要素として利用できるよう変換された属性
+    // Attribute converted so that
+    // it can be used as an element of CSV 
+    char D02[DATE_LENGTH]; // 作成日付
+};
+
+struct REC3
+{
+    char C01[ 1];          // 区分 (Classification)
+    char C02[10];          // 伝票番号 (Slip number)
+    char C03[ 9];          // 売場 (Sales floor)
+    char C04[ 9];          // 担当職番 (Responsible job number)
+    char C05[ 8];          // 顧客ＩＤ (Customer ID)
+    char C06[ 3];          // 明細数 (Number of items)
+    char C07[ 6];          // 時刻 (Times of Day)
+    char C08[16];          // FILLER
+    // CSVの要素として利用できるよう変換された属性
+    // Attribute converted so that 
+    // it can be used as an element of CSV 
+    int N06;               // 明細数
+    char T07[TIME_LENGTH]; // 時刻
+};
+
+struct REC4
+{
+    char C01[ 1];          // 区分 (Classification)
+    char C02[ 3];          // 明細番号 (Item number)
+    char C03[13];          // 商品コード (Product code)
+    char C04[30];          // 商品名 (Product name)
+    char C05[ 9];          // 単価 (Unit price)
+    char C06[ 6];          // 数量 (Quantity)
+    // CSVの要素として利用できるよう変換された属性
+    // Attribute converted so that 
+    // it can be used as an element of CSV 
+    int N02;               // 明細番号
+    int N05;               // 単価
+    int N06;               // 数量
+    char V03[13];          // 商品コード
+    unsigned L03;          // 長さ
+    char V04[30];          // 商品名
+    unsigned L04;          // 長さ
+};
+
+struct REC9
+{
+    char C01[ 1];          // 区分 (Classification)
+    char C02[ 5];          // 件数 (Number of lines)
+    char C03[56];          // FILLER
+    // CSVの要素として利用できるよう変換された属性
+    // Attribute converted so that 
+    // it can be used as an element of CSV 
+    int N02;               // 件数
+};
+
 union LAYOUT
 {
     // For acceptance of fixed length data.
     char line_buff[BUFFER_SIZE];
-
     // ファイル・ヘッダ (File header)
-    struct REC1
-    {
-        char C01[ 1];          // 区分 (Classification)
-        char C02[ 8];          // 作成日付 (Date of creation )
-        char C03[55];          // FILLER
-        // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that
-        // it can be used as an element of CSV 
-        char D02[DATE_LENGTH]; // 作成日付
-
-    } r1
-    ;
+    REC1 r1;
     // 伝票ヘッダ (Slip header)
-    struct REC3
-    {
-        char C01[ 1];          // 区分 (Classification)
-        char C02[10];          // 伝票番号 (Slip number)
-        char C03[ 9];          // 売場 (Sales floor)
-        char C04[ 9];          // 担当職番 (Responsible job number)
-        char C05[ 8];          // 顧客ＩＤ (Customer ID)
-        char C06[ 3];          // 明細数 (Number of items)
-        char C07[ 6];          // 時刻 (Times of Day)
-        char C08[16];          // FILLER
-        // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that 
-        // it can be used as an element of CSV 
-        int N06;               // 明細数
-        char T07[TIME_LENGTH]; // 時刻
-    } r3
-    ;
+    REC3 r3;
     // 伝票明細 (Slip details)
-    struct REC4
-    {
-        char C01[ 1];          // 区分 (Classification)
-        char C02[ 3];          // 明細番号 (Item number)
-        char C03[13];          // 商品コード (Product code)
-        char C04[30];          // 商品名 (Product name)
-        char C05[ 9];          // 単価 (Unit price)
-        char C06[ 6];          // 数量 (Quantity)
-        // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that 
-        // it can be used as an element of CSV 
-        int N02;               // 明細番号
-        int N05;               // 単価
-        int N06;               // 数量
-        char V03[13];          // 商品コード
-        unsigned L03;          // 長さ
-        char V04[30];          // 商品名
-        unsigned L04;          // 長さ
-    } r4
-    ;
+    REC4 r4;
     // ファイル・トレーラ (File trailer)
-    struct REC9
-    {
-        char C01[ 1];          // 区分 (Classification)
-        char C02[ 5];          // 件数 (Number of lines)
-        char C03[56];          // FILLER
-        // CSVの要素として利用できるよう変換された属性
-        // Attribute converted so that 
-        // it can be used as an element of CSV 
-        int N02;               // 件数
-    } r9
-    ;
+    REC9 r9;
 };
 
 extern void output_header_1(std::ofstream& ofs);
@@ -215,11 +217,11 @@ extern void output_header_4(std::ofstream& ofs);
 
 extern void output_header_9(std::ofstream& ofs);
 
-extern std::string output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row);
+extern std::string output_body_1(char* buff, size_t bufl, const REC1& row);
 
-extern std::string output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk);
+extern std::string output_body_3(char* buff, size_t bufl, const REC3& row, PK_REC3& pk);
 
-extern std::string output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk);
+extern std::string output_body_4(char* buff, size_t bufl, const REC4& row, const PK_REC3& pk);
 
-extern std::string output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row);
+extern std::string output_body_9(char* buff, size_t bufl, const REC9& row);
 

@@ -136,7 +136,7 @@ void output_header_9(std::ofstream& ofs)
     );
 }
 
-std::string output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row)
+std::string output_body_1(char* buff, size_t bufl, const REC1& row)
 {
     ADAPT_DATE(D02, C02);
 
@@ -148,7 +148,7 @@ std::string output_body_1(char* buff, size_t bufl, const LAYOUT::REC1& row)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_REC3& pk)
+std::string output_body_3(char* buff, size_t bufl, const REC3& row, PK_REC3& pk)
 {
     // 伝票明細へ移行する項目を保存
     // Save items to be transferred to slip details 
@@ -170,7 +170,7 @@ std::string output_body_3(char* buff, size_t bufl, const LAYOUT::REC3& row, PK_R
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, const PK_REC3& pk)
+std::string output_body_4(char* buff, size_t bufl, const REC4& row, const PK_REC3& pk)
 {
     ADAPT_NUMERIC(N02, C02);
     ADAPT_VARCHAR(V03, C03, L03);
@@ -191,7 +191,7 @@ std::string output_body_4(char* buff, size_t bufl, const LAYOUT::REC4& row, cons
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_9(char* buff, size_t bufl, const LAYOUT::REC9& row)
+std::string output_body_9(char* buff, size_t bufl, const REC9& row)
 {
     ADAPT_NUMERIC(N02, C02);
 

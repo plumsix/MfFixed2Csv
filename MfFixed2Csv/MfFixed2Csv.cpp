@@ -152,9 +152,9 @@ int main(int argc, char** argv)
 
     std::cout
         << format("Selected records (3)=%d, rec size=%d"
-            , num_lines_3, sizeof(LAYOUT::REC3)) << std::endl
+            , num_lines_3, sizeof(REC3)) << std::endl
         << format("Selected records (4)=%d, rec size=%d"
-            , num_lines_4, sizeof(LAYOUT::REC4)) << std::endl
+            , num_lines_4, sizeof(REC4)) << std::endl
         << format("Total records=%d", total_lines) << std::endl;
 
     return 0;
