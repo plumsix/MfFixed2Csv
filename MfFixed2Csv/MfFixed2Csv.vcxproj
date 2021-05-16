@@ -148,7 +148,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MfFixed2Csv.cpp" />
-    <ClCompile Include="MfFixed2Csv_Impl.cpp" />
+    <ClCompile Include="MfFixed2Csv_Impl.cpp">
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">All</AssemblerOutput>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">All</AssemblerOutput>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">All</AssemblerOutput>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">All</AssemblerOutput>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="sample.dat" />

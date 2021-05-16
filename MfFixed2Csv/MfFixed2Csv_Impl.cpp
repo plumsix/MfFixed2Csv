@@ -36,9 +36,7 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "MfFixed2Csv.h"
 #include "windows.h"
 
-
 #define SIZEOF32(arg) (static_cast<unsigned int>(sizeof(arg)))
-
 
 class Converter
 {
@@ -101,7 +99,6 @@ public:
         static Converter* cvt = new Converter();
         return cvt->SjisToUtf8_(str);
     }
-
 };
 
 const unsigned char Converter::bom[] = { 0xEF, 0xBB, 0xBF };  // BOM for utf-8 encoding.
@@ -136,9 +133,88 @@ void output_header_9(std::ofstream& ofs)
     );
 }
 
-std::string output_body_1(char* buff, size_t bufl, const REC1& row)
+/// <summary>
+/// Convert the read date to a representation (yyyy-mm-dd) 
+/// that can be used as a CSV element
+/// </summary>
+/// <param name="d"></param>
+/// <param name="s"></param>
+/// <param name="len"></param>
+void adapt_date(char d[], const char s[], const size_t& len)
 {
-    ADAPT_DATE(D02, C02);
+    char* dst = d;
+    const char* src = s;
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (i == 4 || i == 6)
+        {
+            *dst++ = '-';
+        }
+        *dst++ = *src++;
+    }
+}
+
+/// <summary>
+/// Convert the read time to a representation (MM:ss) 
+/// that can be used as a CSV element 
+/// </summary>
+/// <param name="d">[out] Destination of the converted data </param>
+/// <param name="s">[in] Source before conversion </param>
+/// <param name="len">[in] Source data length </param>
+void adapt_time(char d[], const char s[], const size_t& len)
+{
+    char* dst = d;
+    const char* src = s;
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (i == 2 || i == 4)
+        {
+            *dst++ = ':';
+        }
+        *dst++ = *src++;
+    }
+}
+
+/// <summary>
+/// Convert the read character string to a variable length character string 
+/// </summary>
+/// <param name="d">[out] Destination of the converted data </param>
+/// <param name="s">[in] Source before conversion </param>
+/// <param name="len">[in] Source data length </param>
+/// <returns></returns>
+unsigned adapt_varchar(char d[], const char s[], const size_t& len)
+{
+    size_t wlen = len;
+    char* dst = d + len - 1;
+    const char* src = s + len - 1;
+    /* Processing to eliminate the spaces from the tail. */
+    while (src >= &s[0])
+    {
+        if (*src == ' ')
+        {
+            wlen = src - s;
+            --dst;
+            --src;
+            continue;
+        }
+        else if (*(short*)(src - 1) == ZEN_KAKU_SPACE)
+        {
+            wlen = src - s - 1;
+            dst -= 2;
+            src -= 2;
+            continue;
+        }
+        else
+        {
+            *dst-- = *src--;
+        }
+    }
+    return static_cast<unsigned>(wlen);
+}
+
+std::string output_body_1(char* buff, const size_t& bufl, REC1& row)
+{
+    adapt_date(row.D02, row.C02, sizeof(row.C02));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\"\n"
@@ -148,14 +224,14 @@ std::string output_body_1(char* buff, size_t bufl, const REC1& row)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_3(char* buff, size_t bufl, const REC3& row, PK_REC3& pk)
+std::string output_body_3(char* buff, const size_t& bufl, REC3& row, PK_REC3& pk)
 {
-    // 伝票明細へ移行する項目を保存
     // Save items to be transferred to slip details 
+    // 伝票明細へ移行する項目を保存
     ::memcpy(pk.C02, row.C02, sizeof(pk.C02));
 
-    ADAPT_NUMERIC(N06, C06);
-    ADAPT_TIME(T07, C07);
+    adapt_numeric(row.N06, row.C06, sizeof(row.C06));
+    adapt_time(row.T07, row.C07, sizeof(row.C07));
 
    ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",%d,\"%.*s\"\n"
@@ -170,13 +246,13 @@ std::string output_body_3(char* buff, size_t bufl, const REC3& row, PK_REC3& pk)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_4(char* buff, size_t bufl, const REC4& row, const PK_REC3& pk)
+std::string output_body_4(char* buff, const size_t& bufl, REC4& row, const PK_REC3& pk)
 {
-    ADAPT_NUMERIC(N02, C02);
-    ADAPT_VARCHAR(V03, C03, L03);
-    ADAPT_VARCHAR(V04, C04, L04);
-    ADAPT_NUMERIC(N05, C05);
-    ADAPT_NUMERIC(N06, C06);
+    adapt_numeric(row.N02, row.C02, sizeof(row.C02));
+    row.L03 = adapt_varchar(row.V03, row.C03, sizeof(row.C03));
+    row.L04 = adapt_varchar(row.V04, row.C04, sizeof(row.C04));
+    adapt_numeric(row.N05, row.C05, sizeof(row.C05));
+    adapt_numeric(row.N06, row.C06, sizeof(row.C06));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\",%d,\"%.*s\",\"%.*s\",%d,%d\n"
@@ -191,9 +267,9 @@ std::string output_body_4(char* buff, size_t bufl, const REC4& row, const PK_REC
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_9(char* buff, size_t bufl, const REC9& row)
+std::string output_body_9(char* buff, const size_t& bufl, REC9& row)
 {
-    ADAPT_NUMERIC(N02, C02);
+    adapt_numeric(row.N02, row.C02, sizeof(row.C02));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",%d\n"

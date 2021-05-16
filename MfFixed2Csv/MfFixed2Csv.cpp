@@ -47,6 +47,7 @@ bool write_head_or_trailer(
     }
     write_header(ofs);
     char org_csv[sizeof(LAYOUT) * 2];
+    ::memset(&org_csv, 0, sizeof(org_csv));
     ofs << write_body(org_csv, sizeof(org_csv), rec);
     return false;
 }
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
     char org_csv_4[sizeof(LAYOUT) * 2];
     for (;;)
     {
+        // CR and LF do not appear in memory (read until just before them) 
         ifs.getline(unified.line_buff, BUFFER_SIZE);
         if (ifs.bad() || ifs.eof()) {
             break;
@@ -140,7 +142,7 @@ int main(int argc, char** argv)
                 if (write_head_or_trailer(
                     p1, output_header_1, output_body_1
                     , unified.r1
-                )) return -3;
+                )) return -4;
             }
             break;
         case '9':
@@ -150,7 +152,7 @@ int main(int argc, char** argv)
                 if (write_head_or_trailer(
                     p9, output_header_9, output_body_9
                     , unified.r9
-                )) return -3;
+                )) return -4;
             }
             break;
         default:

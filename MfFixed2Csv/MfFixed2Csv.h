@@ -41,6 +41,11 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <ctime>
 #include <string.h>
 
+#define DATE_LENGTH 10  // Length when the date is expressed as "yyyy-mm-dd" 
+#define TIME_LENGTH  8  // Length when the date is expressed as "hh:MM:dd" 
+#define ZEN_KAKU_SPACE   0x4081  // 全角空白 (Shift-JIS)
+#define BUFFER_SIZE         64
+
 // like the printf in C.
 template <typename ... Args>
 std::string format(const std::string& fmt, Args ... args)
@@ -51,85 +56,65 @@ std::string format(const std::string& fmt, Args ... args)
     return std::string(&buf[0], &buf[0] + len);
 }
 
-#define DATE_LENGTH 10  // Length when the date is expressed as "yyyy-mm-dd" 
-#define TIME_LENGTH  8  // Length when the date is expressed as "hh:MM:dd" 
-#define ZEN_KAKU_SPACE   0x4081  // 全角空白 (Shift-JIS)
-#define BUFFER_SIZE       1000
-
-
-// Convert the read date to a representation (yyyy-mm-dd) 
-// that can be used as a CSV element
-#define ADAPT_DATE(d, s) \
-{ \
-    char* dst = const_cast<char*>(row.d); \
-    const char* src = row.s; \
-    for (size_t i = 0; i < sizeof(row.s); ++i) \
-    { \
-        if (i == 4 || i == 6) \
-        { \
-            *dst++ = '-'; \
-        } \
-        *dst++ = *src++; \
-    } \
-}
-
-// Convert the read time to a representation (MM: ss) 
-// that can be used as a CSV element 
-#define ADAPT_TIME(d, s) \
-{ \
-    char* dst = const_cast<char*>(row.d); \
-    const char* src = row.s; \
-    for (size_t i = 0; i < sizeof(row.s); ++i) \
-    { \
-        if (i == 2 || i == 4) \
-        { \
-            *dst++ = ':'; \
-        } \
-        *dst++ = *src++; \
-    } \
-}
-
-// Convert the read number to a representation (decimal string) 
-// that can be used as a CSV element 
-#define ADAPT_NUMERIC(d, s) \
-{ \
-    int& dst = const_cast<int&>(row.d); \
-    const char* src = row.s; \
-    dst = 0; \
-    for (size_t i = 0; i < sizeof(row.s); ++i) \
-    { \
-        dst *= 10; \
-        dst += (*src++) - '0'; \
-    } \
-}
-
-// Convert the read character string to a variable length character string 
-#define ADAPT_VARCHAR(d, s, l) \
-{  \
-    /* Processing to eliminate the spaces from the tail. */\
-    char* dst = const_cast<char*>(row.d) + sizeof(row.d) - 1; \
-    const char* src = row.s + sizeof(row.s) - 1; \
-    while (src >= &row.s[0]) \
-    { \
-        if (*src == ' ') \
-        { \
-            const_cast<unsigned&>(row.l) = static_cast<unsigned>(src - row.s); \
-            --dst; \
-            --src; \
-            continue; \
-        } \
-        else if (*(short*)(src - 1) == ZEN_KAKU_SPACE) \
-        { \
-            const_cast<unsigned&>(row.l) = static_cast<unsigned>(src - row.s - 1); \
-            dst -= 2; \
-            src -= 2; \
-            continue; \
-        } \
-        else \
-        { \
-            *dst-- = *src--; \
-        } \
-    } \
+/// <summary>
+/// Convert the read number to a representation (decimal string) 
+/// that can be used as a CSV element.
+/// Examples conversion of signed decimals:
+///  Negative decimal number with a minimum digit other than 0 (1 to 9) 
+///   "0012Q" => "-120"   
+///  Positive decimal number with a minimum digit other than 0 (1 to 9) 
+///   "0012H" =>  "128"
+///  Negative decimal number with a minimum digit 0
+///   "0012}" => "-120"   
+///  Positive decimal number with a minimum digit 0 
+///   "0012{" =>  "120"
+/// </summary>
+/// <param name="d">[out] Destination of the converted data </param>
+/// <param name="s">[in] Source before conversion </param>
+/// <param name="len">[in] Source data length </param>
+/// <returns></returns>
+template<typename INTEGER>
+bool adapt_numeric(INTEGER& dst, const char s[], const size_t& len)
+{
+    const char* src = s;
+    dst = 0;
+    bool rc = false;
+    for (size_t i = 0; i < len - 1; ++i)
+    {
+        dst *= 10;
+        dst += (*src++) - '0';
+    }
+    dst *= 10;
+    if (*src < 0x40)           // unsgined integer
+    {
+        dst += (*src++) - '0';
+    }
+    else if (*src < 0x4a)      // +1 ～ +9 signed integer
+    {
+        dst += (*src++) - '@'; // 0x40
+    }
+    else if (*src < 0x54)      // -1 ～ -9 signed integer
+    {
+        dst += (*src++) - 'I'; // 0x49
+        dst *= -1;
+    }
+    else if (*src < 0x7d)      // +0 signed integer
+    {
+        dst += (*src++) - '{'; // 0x7b
+    }
+    else if (*src < 0x7e)      // -0 signed integer
+    {
+        dst += (*src++) - '}'; // 0x7d
+        dst *= -1;
+    }
+    else
+    {
+        std::cerr 
+            << "Encountered an abnormal number." 
+            << std::string(s, len) << std::endl;
+        rc = true;;
+    }
+    return rc;
 }
 
 struct PK_REC3 {
@@ -160,7 +145,7 @@ struct REC3
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
-    int N06;               // 明細数
+    short N06;             // 明細数
     char T07[TIME_LENGTH]; // 時刻
 };
 
@@ -175,9 +160,9 @@ struct REC4
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
-    int N02;               // 明細番号
-    int N05;               // 単価
-    int N06;               // 数量
+    short N02;             // 明細番号
+    int64_t N05;           // 単価
+    short N06;             // 数量
     char V03[13];          // 商品コード
     unsigned L03;          // 長さ
     char V04[30];          // 商品名
@@ -192,7 +177,7 @@ struct REC9
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
-    int N02;               // 件数
+    short N02;             // 件数
 };
 
 union LAYOUT
@@ -217,11 +202,11 @@ extern void output_header_4(std::ofstream& ofs);
 
 extern void output_header_9(std::ofstream& ofs);
 
-extern std::string output_body_1(char* buff, size_t bufl, const REC1& row);
+extern std::string output_body_1(char* buff, const size_t& bufl, REC1& row);
 
-extern std::string output_body_3(char* buff, size_t bufl, const REC3& row, PK_REC3& pk);
+extern std::string output_body_3(char* buff, const size_t& bufl, REC3& row, PK_REC3& pk);
 
-extern std::string output_body_4(char* buff, size_t bufl, const REC4& row, const PK_REC3& pk);
+extern std::string output_body_4(char* buff, const size_t& bufl, REC4& row, const PK_REC3& pk);
 
-extern std::string output_body_9(char* buff, size_t bufl, const REC9& row);
+extern std::string output_body_9(char* buff, const size_t& bufl, REC9& row);
 
