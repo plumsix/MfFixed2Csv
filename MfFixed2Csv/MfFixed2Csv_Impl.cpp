@@ -38,6 +38,46 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define SIZEOF32(arg) (static_cast<unsigned int>(sizeof(arg)))
 
+std::filesystem::path REC1::path_to_csv(
+    const std::string& o_dir,
+    const std::filesystem::path& in_stem
+)
+{
+    std::filesystem::path pt(o_dir);
+    pt /= in_stem.string() + "_1.csv";
+    return pt;
+}
+
+std::filesystem::path REC3::path_to_csv(
+    const std::string& o_dir,
+    const std::filesystem::path& in_stem
+)
+{
+    std::filesystem::path pt(o_dir);
+    pt /= in_stem.string() + "_3.csv";
+    return pt;
+}
+
+std::filesystem::path REC4::path_to_csv(
+    const std::string& o_dir,
+    const std::filesystem::path& in_stem
+)
+{
+    std::filesystem::path pt(o_dir);
+    pt /= in_stem.string() + "_4.csv";
+    return pt;
+}
+
+std::filesystem::path REC9::path_to_csv(
+    const std::string& o_dir,
+    const std::filesystem::path& in_stem
+)
+{
+    std::filesystem::path pt(o_dir);
+    pt /= in_stem.string() + "_9.csv";
+    return pt;
+}
+
 class Converter
 {
 public:
@@ -103,14 +143,13 @@ public:
 
 const unsigned char Converter::bom[] = { 0xEF, 0xBB, 0xBF };  // BOM for utf-8 encoding.
 
-
-void output_header_1(std::ofstream& ofs)
+void REC1::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom
         << Converter::SjisToUtf8("\"区分\",\"作成日付\"\n");
 }
 
-void output_header_3(std::ofstream& ofs)
+void REC3::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom
         << Converter::SjisToUtf8(
@@ -118,7 +157,7 @@ void output_header_3(std::ofstream& ofs)
         );
 }
 
-void output_header_4(std::ofstream& ofs)
+void REC4::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom 
         << Converter::SjisToUtf8(
@@ -126,7 +165,7 @@ void output_header_4(std::ofstream& ofs)
         );
 }
 
-void output_header_9(std::ofstream& ofs)
+void REC9::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom
         << Converter::SjisToUtf8("\"区分\",\"件数\"\n"
@@ -212,69 +251,69 @@ unsigned adapt_varchar(char d[], const char s[], const size_t& len)
     return static_cast<unsigned>(wlen);
 }
 
-std::string output_body_1(char* buff, const size_t& bufl, REC1& row)
+std::string REC1::output_body(char* buff, const size_t& bufl)
 {
-    adapt_date(row.D02, row.C02, sizeof(row.C02));
+    adapt_date(D02, C02, sizeof(C02));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\"\n"
-        , SIZEOF32(row.C01), row.C01
-        , SIZEOF32(row.D02), row.D02
+        , SIZEOF32(C01), C01
+        , SIZEOF32(D02), D02
     );
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_3(char* buff, const size_t& bufl, REC3& row, PK_REC3& pk)
+std::string REC3::output_body(char* buff, const size_t& bufl, PK_REC3& pk)
 {
     // Save items to be transferred to slip details 
     // 伝票明細へ移行する項目を保存
-    ::memcpy(pk.C02, row.C02, sizeof(pk.C02));
+    ::memcpy(pk.C02, C02, sizeof(pk.C02));
 
-    adapt_numeric(row.N06, row.C06, sizeof(row.C06));
-    adapt_time(row.T07, row.C07, sizeof(row.C07));
+    adapt_numeric(N06, C06, sizeof(C06));
+    adapt_time(T07, C07, sizeof(C07));
 
    ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",\"%.*s\",%d,\"%.*s\"\n"
-        , SIZEOF32(row.C01), row.C01
-        , SIZEOF32(row.C02), row.C02
-        , SIZEOF32(row.C03), row.C03
-        , SIZEOF32(row.C04), row.C04
-        , SIZEOF32(row.C05), row.C05
-        , row.N06
-        , SIZEOF32(row.T07), row.T07
+        , SIZEOF32(C01), C01
+        , SIZEOF32(C02), C02
+        , SIZEOF32(C03), C03
+        , SIZEOF32(C04), C04
+        , SIZEOF32(C05), C05
+        , N06
+        , SIZEOF32(T07), T07
     );
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_4(char* buff, const size_t& bufl, REC4& row, const PK_REC3& pk)
+std::string REC4::output_body(char* buff, const size_t& bufl, const PK_REC3& pk)
 {
-    adapt_numeric(row.N02, row.C02, sizeof(row.C02));
-    row.L03 = adapt_varchar(row.V03, row.C03, sizeof(row.C03));
-    row.L04 = adapt_varchar(row.V04, row.C04, sizeof(row.C04));
-    adapt_numeric(row.N05, row.C05, sizeof(row.C05));
-    adapt_numeric(row.N06, row.C06, sizeof(row.C06));
+    adapt_numeric(N02, C02, sizeof(C02));
+    L03 = adapt_varchar(V03, C03, sizeof(C03));
+    L04 = adapt_varchar(V04, C04, sizeof(C04));
+    adapt_numeric(N05, C05, sizeof(C05));
+    adapt_numeric(N06, C06, sizeof(C06));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",\"%.*s\",%d,\"%.*s\",\"%.*s\",%d,%d\n"
-        , SIZEOF32(row.C01), row.C01
+        , SIZEOF32(C01), C01
         , SIZEOF32(pk.C02), pk.C02
-        , row.N02
-        , row.L03, row.V03
-        , row.L04, row.V04
-        , row.N05
-        , row.N06
+        , N02
+        , L03, V03
+        , L04, V04
+        , static_cast<unsigned>(N05)
+        , N06
     );
     return Converter::SjisToUtf8(buff);
 }
 
-std::string output_body_9(char* buff, const size_t& bufl, REC9& row)
+std::string REC9::output_body(char* buff, const size_t& bufl)
 {
-    adapt_numeric(row.N02, row.C02, sizeof(row.C02));
+    adapt_numeric(N02, C02, sizeof(C02));
 
     ::snprintf(buff, bufl
         , "\"%.*s\",%d\n"
-        , SIZEOF32(row.C01), row.C01
-        , row.N02
+        , SIZEOF32(C01), C01
+        , N02
     );
     return Converter::SjisToUtf8(buff);
 }

@@ -31,24 +31,23 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "MfFixed2Csv.h"
 
-template<class F_HDR, class F_BDY, class RECTYPE>
+template<typename RECTYPE>
 bool write_head_or_trailer(
-    std::filesystem::path& path_to_csv, 
-    F_HDR write_header, 
-    F_BDY write_body, 
+    const std::string& o_dir,
+    std::filesystem::path& in_stem,
     RECTYPE& rec
 )
 {
-    std::ofstream ofs(path_to_csv);
+    std::ofstream ofs(rec.path_to_csv(o_dir, in_stem));
     if (ofs.fail())
     {
         std::cerr << "Error - Failed to open file." << std::endl;
         return true;
     }
-    write_header(ofs);
+    rec.output_header(ofs);
     char org_csv[sizeof(LAYOUT) * 2];
     ::memset(&org_csv, 0, sizeof(org_csv));
-    ofs << write_body(org_csv, sizeof(org_csv), rec);
+    ofs << rec.output_body(org_csv, sizeof(org_csv));
     return false;
 }
 
@@ -83,21 +82,20 @@ int main(int argc, char** argv)
 
     std::string o_dir(argv[2]);
 
+    PK_REC3 pk;         // stores a slip number recently getline() call.
+    LAYOUT unified;              // For acceptance of fixed length data.
+
     // 入力元ファイルのベース名（出力ファイルの接頭辞として利用される）
     // Base name of input source file (used as prefix of output files)
     auto in_stem = std::filesystem::path(argv[1]).stem();
 
     // CSV column names.
-    std::filesystem::path p3(o_dir);
-    p3 /= in_stem.string() + "_3.csv";
-    std::ofstream ofs_h(p3);
-    output_header_3(ofs_h);
+    std::ofstream ofs_h(unified.r3.path_to_csv(o_dir, in_stem));
+    unified.r3.output_header(ofs_h);
 
     // CSV column names.
-    std::filesystem::path p4(o_dir);
-    p4 /= in_stem.string() + "_4.csv";
-    std::ofstream ofs_b(p4);
-    output_header_4(ofs_b);
+    std::ofstream ofs_b(unified.r4.path_to_csv(o_dir, in_stem));
+    unified.r4.output_header(ofs_b);
 
     std::cout << format(
         "The data before conversion will be read from %s \n"
@@ -109,9 +107,6 @@ int main(int argc, char** argv)
     int num_lines_3 = 0;
     int num_lines_4 = 0;
 
-    PK_REC3 pk;                  // stores a slip number recently getline() call.
-    LAYOUT unified;                       // For acceptance of fixed length data.
-    ::memset(&unified, 0, sizeof(LAYOUT));
     char org_csv_3[sizeof(LAYOUT) * 2]; // A working area to organize CSV format.
     char org_csv_4[sizeof(LAYOUT) * 2];
     for (;;)
@@ -124,34 +119,28 @@ int main(int argc, char** argv)
         switch (unified.line_buff[0])
         {
         case '3':
-            ofs_h << output_body_3(
-                org_csv_3, sizeof(org_csv_3), unified.r3, pk
+            ofs_h << unified.r3.output_body(
+                org_csv_3, sizeof(org_csv_3), pk
             );
             num_lines_3++;
             break;
         case '4':
-            ofs_b << output_body_4(
-                org_csv_4, sizeof(org_csv_4), unified.r4, pk
+            ofs_b << unified.r4.output_body(
+                org_csv_4, sizeof(org_csv_4), pk
             );
             num_lines_4++;
             break;
         case '1':
             {
-                std::filesystem::path p1(o_dir);
-                p1 /= in_stem.string() + "_1.csv";
                 if (write_head_or_trailer(
-                    p1, output_header_1, output_body_1
-                    , unified.r1
+                    o_dir, in_stem, unified.r1
                 )) return -4;
             }
             break;
         case '9':
             {
-                std::filesystem::path p9(o_dir);
-                p9 /= in_stem.string() + "_9.csv";
                 if (write_head_or_trailer(
-                    p9, output_header_9, output_body_9
-                    , unified.r9
+                    o_dir, in_stem, unified.r9
                 )) return -4;
             }
             break;

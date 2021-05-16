@@ -44,7 +44,13 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DATE_LENGTH 10  // Length when the date is expressed as "yyyy-mm-dd" 
 #define TIME_LENGTH  8  // Length when the date is expressed as "hh:MM:dd" 
 #define ZEN_KAKU_SPACE   0x4081  // 全角空白 (Shift-JIS)
-#define BUFFER_SIZE         64
+
+/**
+ * IMPORTANT:
+ * Give the excactly length of a fixed length record.
+ * To avoid unintentional overwriting of other members who do not share.
+ **/
+#define BUFFER_SIZE  64
 
 // like the printf in C.
 template <typename ... Args>
@@ -73,8 +79,8 @@ std::string format(const std::string& fmt, Args ... args)
 /// <param name="s">[in] Source before conversion </param>
 /// <param name="len">[in] Source data length </param>
 /// <returns></returns>
-template<typename INTEGER>
-bool adapt_numeric(INTEGER& dst, const char s[], const size_t& len)
+template<typename INT>
+bool adapt_numeric(INT& dst, const char s[], const size_t& len)
 {
     const char* src = s;
     dst = 0;
@@ -89,20 +95,20 @@ bool adapt_numeric(INTEGER& dst, const char s[], const size_t& len)
     {
         dst += (*src++) - '0';
     }
-    else if (*src < 0x4a)      // +1 ～ +9 signed integer
+    else if (*src < 0x4a)  // +1 to +9 signed integer
     {
         dst += (*src++) - '@'; // 0x40
     }
-    else if (*src < 0x54)      // -1 ～ -9 signed integer
+    else if (*src < 0x54)  // -9 to -1 signed integer
     {
         dst += (*src++) - 'I'; // 0x49
         dst *= -1;
     }
-    else if (*src < 0x7d)      // +0 signed integer
+    else if (*src < 0x7d)  // +0 signed integer
     {
         dst += (*src++) - '{'; // 0x7b
     }
-    else if (*src < 0x7e)      // -0 signed integer
+    else if (*src < 0x7e)  // -0 signed integer
     {
         dst += (*src++) - '}'; // 0x7d
         dst *= -1;
@@ -126,10 +132,19 @@ struct REC1
     char C01[1];          // 区分 (Classification)
     char C02[8];          // 作成日付 (Date of creation )
     char C03[55];          // FILLER
+
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that
     // it can be used as an element of CSV 
     char D02[DATE_LENGTH]; // 作成日付
+
+    // To hide operations on members. 
+    std::filesystem::path path_to_csv(
+        const std::string& o_dir,
+        const std::filesystem::path& in_stem
+    );
+    void output_header(std::ofstream& ofs);
+    std::string output_body(char* buff, const size_t& bufl);
 };
 
 struct REC3
@@ -142,11 +157,20 @@ struct REC3
     char C06[ 3];          // 明細数 (Number of items)
     char C07[ 6];          // 時刻 (Times of Day)
     char C08[16];          // FILLER
+
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
     short N06;             // 明細数
     char T07[TIME_LENGTH]; // 時刻
+
+    // To hide operations on members. 
+    std::filesystem::path path_to_csv(
+        const std::string& o_dir,
+        const std::filesystem::path& in_stem
+    );
+    void output_header(std::ofstream& ofs);
+    std::string output_body(char* buff, const size_t& bufl, PK_REC3& pk);
 };
 
 struct REC4
@@ -157,6 +181,7 @@ struct REC4
     char C04[30];          // 商品名 (Product name)
     char C05[ 9];          // 単価 (Unit price)
     char C06[ 6];          // 数量 (Quantity)
+
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
@@ -167,6 +192,14 @@ struct REC4
     unsigned L03;          // 長さ
     char V04[30];          // 商品名
     unsigned L04;          // 長さ
+
+    // To hide operations on members. 
+    std::filesystem::path path_to_csv(
+        const std::string& o_dir,
+        const std::filesystem::path& in_stem
+    );
+    void output_header(std::ofstream& ofs);
+    std::string output_body(char* buff, const size_t& bufl, const PK_REC3& pk);
 };
 
 struct REC9
@@ -174,10 +207,19 @@ struct REC9
     char C01[ 1];          // 区分 (Classification)
     char C02[ 5];          // 件数 (Number of lines)
     char C03[56];          // FILLER
+
     // CSVの要素として利用できるよう変換された属性
     // Attribute converted so that 
     // it can be used as an element of CSV 
     short N02;             // 件数
+
+    // To hide operations on members. 
+    std::filesystem::path path_to_csv(
+        const std::string& o_dir,
+        const std::filesystem::path& in_stem
+    );
+    void output_header(std::ofstream& ofs);
+    std::string output_body(char* buff, const size_t& bufl);
 };
 
 union LAYOUT
@@ -192,21 +234,9 @@ union LAYOUT
     REC4 r4;
     // ファイル・トレーラ (File trailer)
     REC9 r9;
+
+    LAYOUT()
+    {
+        ::memset(this, 0, sizeof(*this));
+    }
 };
-
-extern void output_header_1(std::ofstream& ofs);
-
-extern void output_header_3(std::ofstream& ofs);
-
-extern void output_header_4(std::ofstream& ofs);
-
-extern void output_header_9(std::ofstream& ofs);
-
-extern std::string output_body_1(char* buff, const size_t& bufl, REC1& row);
-
-extern std::string output_body_3(char* buff, const size_t& bufl, REC3& row, PK_REC3& pk);
-
-extern std::string output_body_4(char* buff, const size_t& bufl, REC4& row, const PK_REC3& pk);
-
-extern std::string output_body_9(char* buff, const size_t& bufl, REC9& row);
-
