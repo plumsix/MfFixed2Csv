@@ -131,18 +131,14 @@ int main(int argc, char** argv)
             num_lines_4++;
             break;
         case '1':
-            {
-                if (write_head_or_trailer(
-                    o_dir, in_stem, unified.r1
-                )) return -4;
-            }
+            if (write_head_or_trailer(
+                o_dir, in_stem, unified.r1
+            )) return -4;
             break;
         case '9':
-            {
-                if (write_head_or_trailer(
-                    o_dir, in_stem, unified.r9
-                )) return -4;
-            }
+            if (write_head_or_trailer(
+                o_dir, in_stem, unified.r9
+            )) return -4;
             break;
         default:
             assert(false);  //The process never reaches here.

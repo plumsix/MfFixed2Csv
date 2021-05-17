@@ -80,7 +80,11 @@ std::string format(const std::string& fmt, Args ... args)
 /// <param name="len">[in] Source data length </param>
 /// <returns></returns>
 template<typename INT>
-bool adapt_numeric(INT& dst, const char s[], const size_t& len)
+bool adapt_numeric(
+    INT& dst, 
+    const char s[], 
+    const size_t& len
+)
 {
     const char* src = s;
     dst = 0;

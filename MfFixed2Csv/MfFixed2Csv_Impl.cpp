@@ -88,38 +88,7 @@ private:
     std::unique_ptr<wchar_t[]> wchar_buf_;
     int char_buf_len_;
     std::unique_ptr<char[]> char_buf_;
-
-    const char* SjisToUtf8_(const char* str)
-    {
-        ::EnterCriticalSection(&cs_);
-        // Convert sjis to Unicode
-        int iLenUnicode = MultiByteToWideChar(
-            CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1, NULL, 0
-        );
-        if (wchar_buf_len_ < iLenUnicode)
-        {
-            wchar_buf_len_ = iLenUnicode;
-            wchar_buf_.reset(new wchar_t[wchar_buf_len_]);
-        }
-        MultiByteToWideChar(
-            CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1
-            , wchar_buf_.get(), iLenUnicode
-        );
-        // Ccnvert Unicode to UTF-8
-        int iLenUtf8 = WideCharToMultiByte(
-            CP_UTF8, 0, wchar_buf_.get(), iLenUnicode, NULL, 0, NULL, NULL
-        );
-        if (char_buf_len_ < iLenUtf8)
-        {
-            char_buf_len_ = iLenUtf8;
-            char_buf_.reset(new char[char_buf_len_]);
-        }
-        WideCharToMultiByte(CP_UTF8, 0, wchar_buf_.get(), iLenUnicode
-            , char_buf_.get(), iLenUtf8, NULL, NULL
-        );
-        ::LeaveCriticalSection(&cs_);
-        return char_buf_.get();
-    }
+    const char* SjisToUtf8_(const char* str);
 
 public:
     Converter()
@@ -140,6 +109,40 @@ public:
         return cvt->SjisToUtf8_(str);
     }
 };
+
+const char* Converter::SjisToUtf8_(const char* str)
+{
+    ::EnterCriticalSection(&cs_);
+    // Convert sjis to Unicode
+    int iLenUnicode = MultiByteToWideChar(
+        CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1, NULL, 0
+    );
+    if (wchar_buf_len_ < iLenUnicode)
+    {
+        wchar_buf_len_ = iLenUnicode;
+        wchar_buf_.reset(new wchar_t[wchar_buf_len_]);
+    }
+    MultiByteToWideChar(
+        CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1
+        , wchar_buf_.get(), iLenUnicode
+    );
+    // Ccnvert Unicode to UTF-8
+    int iLenUtf8 = WideCharToMultiByte(
+        CP_UTF8, 0, wchar_buf_.get(), iLenUnicode, NULL, 0, 
+        NULL, NULL
+    );
+    if (char_buf_len_ < iLenUtf8)
+    {
+        char_buf_len_ = iLenUtf8;
+        char_buf_.reset(new char[char_buf_len_]);
+    }
+    WideCharToMultiByte(
+        CP_UTF8, 0, wchar_buf_.get(), iLenUnicode, 
+        char_buf_.get(), iLenUtf8, NULL, NULL
+    );
+    ::LeaveCriticalSection(&cs_);
+    return char_buf_.get();
+}
 
 const unsigned char Converter::bom[] = { 0xEF, 0xBB, 0xBF };  // BOM for utf-8 encoding.
 
@@ -179,7 +182,11 @@ void REC9::output_header(std::ofstream& ofs)
 /// <param name="d"></param>
 /// <param name="s"></param>
 /// <param name="len"></param>
-void adapt_date(char d[], const char s[], const size_t& len)
+void adapt_date(
+    char d[], 
+    const char s[], 
+    const size_t& len
+)
 {
     char* dst = d;
     const char* src = s;
@@ -200,7 +207,11 @@ void adapt_date(char d[], const char s[], const size_t& len)
 /// <param name="d">[out] Destination of the converted data </param>
 /// <param name="s">[in] Source before conversion </param>
 /// <param name="len">[in] Source data length </param>
-void adapt_time(char d[], const char s[], const size_t& len)
+void adapt_time(
+    char d[], 
+    const char s[], 
+    const size_t& len
+)
 {
     char* dst = d;
     const char* src = s;
@@ -215,13 +226,18 @@ void adapt_time(char d[], const char s[], const size_t& len)
 }
 
 /// <summary>
-/// Convert the read character string to a variable length character string 
+/// Convert the read character string 
+/// to a variable length character string 
 /// </summary>
 /// <param name="d">[out] Destination of the converted data </param>
 /// <param name="s">[in] Source before conversion </param>
 /// <param name="len">[in] Source data length </param>
 /// <returns></returns>
-unsigned adapt_varchar(char d[], const char s[], const size_t& len)
+unsigned adapt_varchar(
+    char d[], 
+    const char s[], 
+    const size_t& len
+)
 {
     size_t wlen = len;
     char* dst = d + len - 1;
@@ -251,7 +267,10 @@ unsigned adapt_varchar(char d[], const char s[], const size_t& len)
     return static_cast<unsigned>(wlen);
 }
 
-std::string REC1::output_body(char* buff, const size_t& bufl)
+std::string REC1::output_body(
+    char* buff, 
+    const size_t& bufl
+)
 {
     adapt_date(D02, C02, sizeof(C02));
 
@@ -263,7 +282,11 @@ std::string REC1::output_body(char* buff, const size_t& bufl)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string REC3::output_body(char* buff, const size_t& bufl, PK_REC3& pk)
+std::string REC3::output_body(
+    char* buff, 
+    const size_t& bufl, 
+    PK_REC3& pk
+)
 {
     // Save items to be transferred to slip details 
     // 伝票明細へ移行する項目を保存
@@ -285,7 +308,11 @@ std::string REC3::output_body(char* buff, const size_t& bufl, PK_REC3& pk)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string REC4::output_body(char* buff, const size_t& bufl, const PK_REC3& pk)
+std::string REC4::output_body(
+    char* buff, 
+    const size_t& bufl, 
+    const PK_REC3& pk
+)
 {
     adapt_numeric(N02, C02, sizeof(C02));
     L03 = adapt_varchar(V03, C03, sizeof(C03));
@@ -306,7 +333,10 @@ std::string REC4::output_body(char* buff, const size_t& bufl, const PK_REC3& pk)
     return Converter::SjisToUtf8(buff);
 }
 
-std::string REC9::output_body(char* buff, const size_t& bufl)
+std::string REC9::output_body(
+    char* buff, 
+    const size_t& bufl
+)
 {
     adapt_numeric(N02, C02, sizeof(C02));
 
