@@ -89,8 +89,6 @@ private:
     int char_buf_len_;
     std::unique_ptr<char[]> char_buf_;
     const char* SjisToUtf8_(const char* str);
-
-public:
     Converter()
         : wchar_buf_len_(3072)
         , wchar_buf_(new wchar_t[wchar_buf_len_])
@@ -103,6 +101,7 @@ public:
     {
         ::DeleteCriticalSection(&cs_);
     }
+public:
     static std::string SjisToUtf8(const char* str)
     {
         static Converter* cvt = new Converter();
@@ -114,7 +113,7 @@ const char* Converter::SjisToUtf8_(const char* str)
 {
     ::EnterCriticalSection(&cs_);
     // Convert sjis to Unicode
-    int iLenUnicode = MultiByteToWideChar(
+    int iLenUnicode = ::MultiByteToWideChar(
         CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1,
         NULL, 0
     );
@@ -123,12 +122,12 @@ const char* Converter::SjisToUtf8_(const char* str)
         wchar_buf_len_ = iLenUnicode;
         wchar_buf_.reset(new wchar_t[wchar_buf_len_]);
     }
-    MultiByteToWideChar(
+    ::MultiByteToWideChar(
         CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1
         , wchar_buf_.get(), iLenUnicode
     );
     // Ccnvert Unicode to UTF-8
-    int iLenUtf8 = WideCharToMultiByte(
+    int iLenUtf8 = ::WideCharToMultiByte(
         CP_UTF8, 0, wchar_buf_.get(), iLenUnicode, NULL, 0, 
         NULL, NULL
     );
@@ -137,7 +136,7 @@ const char* Converter::SjisToUtf8_(const char* str)
         char_buf_len_ = iLenUtf8;
         char_buf_.reset(new char[char_buf_len_]);
     }
-    WideCharToMultiByte(
+    ::WideCharToMultiByte(
         CP_UTF8, 0, wchar_buf_.get(), iLenUnicode, 
         char_buf_.get(), iLenUtf8, NULL, NULL
     );
@@ -158,7 +157,8 @@ void REC3::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom
         << Converter::SjisToUtf8(
-            "\"区分\",\"伝票番号\",\"売場\",\"担当職番\",\"顧客ＩＤ\",\"明細数\",\"時刻\"\n"
+            "\"区分\",\"伝票番号\",\"売場\",\"担当職番\","
+            "\"顧客ＩＤ\",\"明細数\",\"時刻\"\n"
         );
 }
 
@@ -166,7 +166,8 @@ void REC4::output_header(std::ofstream& ofs)
 {
     ofs << Converter::bom 
         << Converter::SjisToUtf8(
-            "\"区分\",\"伝票番号\",\"明細番号\",\"商品コード\",\"商品名\",\"単価\",\"数量\"\n"
+            "\"区分\",\"伝票番号\",\"明細番号\","
+            "\"商品コード\",\"商品名\",\"単価\",\"数量\"\n"
         );
 }
 
