@@ -242,17 +242,18 @@ unsigned adapt_varchar(
     size_t wlen = len;
     char* dst = d + len - 1;
     const char* src = s + len - 1;
+    bool removing = true;
     /* Processing to eliminate the spaces from the tail. */
     while (src >= &s[0])
     {
-        if (*src == ' ')
+        if (*src == ' ' && removing)
         {
             wlen = src - s;
             --dst;
             --src;
             continue;
         }
-        else if (*(short*)(src - 1) == ZEN_KAKU_SPACE)
+        else if (*(short*)(src - 1) == ZEN_KAKU_SPACE && removing)
         {
             wlen = src - s - 1;
             dst -= 2;
@@ -262,6 +263,7 @@ unsigned adapt_varchar(
         else
         {
             *dst-- = *src--;
+            if (removing) removing = false;
         }
     }
     return static_cast<unsigned>(wlen);
