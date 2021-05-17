@@ -115,7 +115,8 @@ const char* Converter::SjisToUtf8_(const char* str)
     ::EnterCriticalSection(&cs_);
     // Convert sjis to Unicode
     int iLenUnicode = MultiByteToWideChar(
-        CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1, NULL, 0
+        CP_ACP, 0, str, static_cast<int>(strlen(str)) + 1,
+        NULL, 0
     );
     if (wchar_buf_len_ < iLenUnicode)
     {
@@ -144,7 +145,8 @@ const char* Converter::SjisToUtf8_(const char* str)
     return char_buf_.get();
 }
 
-const unsigned char Converter::bom[] = { 0xEF, 0xBB, 0xBF };  // BOM for utf-8 encoding.
+const unsigned char Converter::bom[]
+    = { 0xEF, 0xBB, 0xBF };  // BOM for utf-8 encoding.
 
 void REC1::output_header(std::ofstream& ofs)
 {
