@@ -82,7 +82,6 @@ int main(int argc, char** argv)
 
     std::string o_dir(argv[2]);
 
-    PK_REC3 pk;         // stores a slip number recently getline() call.
     LAYOUT unified;              // For acceptance of fixed length data.
 
     // 入力元ファイルのベース名（出力ファイルの接頭辞として利用される）
@@ -107,11 +106,15 @@ int main(int argc, char** argv)
     int num_lines_3 = 0;
     int num_lines_4 = 0;
 
-    char org_csv_3[sizeof(LAYOUT) * 2]; // A working area to organize CSV format.
+    // A working area to organize CSV format.
+    char org_csv_3[sizeof(LAYOUT) * 2];
     char org_csv_4[sizeof(LAYOUT) * 2];
     for (;;)
     {
-        // CR and LF do not appear in memory (read until just before them) 
+        // stores a slip number recently getline() call.
+        PK_REC3 pk;
+        // CR and LF do not appear in memory 
+        // (read until just before them) 
         ifs.getline(unified.line_buff, BUFFER_SIZE);
         if (ifs.bad() || ifs.eof()) {
             break;
@@ -141,7 +144,8 @@ int main(int argc, char** argv)
             )) return -4;
             break;
         default:
-            assert(false);  //The process never reaches here.
+            //The process never reaches here.
+            assert(false);
             return -1;
         }
         total_lines++;
